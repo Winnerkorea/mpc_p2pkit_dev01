@@ -93,7 +93,10 @@ class P2PSession: NSObject {
         
         // 주변 피어에게 광고를 시작할 Advertiser 생성 (discovery 정보 포함)
         advertiser = MCNearbyServiceAdvertiser(peer: myPeerID,
-                                               discoveryInfo: ["discoveryId": "\(myDiscoveryInfo.discoveryId)"],
+                                               discoveryInfo: [
+                                                   "discoveryId": "\(myDiscoveryInfo.discoveryId)",
+                                                   "preferredPeerCount": "\(maxPeerCount)"
+                                               ],
                                                serviceType: P2PConstants.networkChannelName)
         
         // 주변 피어를 검색할 Browser 생성
@@ -266,8 +269,13 @@ extension P2PSession: MCSessionDelegate {
 
 extension P2PSession: MCNearbyServiceBrowserDelegate {
     public func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        if let discoveryId = info?["discoveryId"], discoveryId != myDiscoveryInfo.discoveryId {
-            prettyPrint("Found Peer: [\(peerID)], with id: [\(discoveryId)]")
+        // Check discoveryId and preferredPeerCount match
+        if let discoveryId = info?["discoveryId"],
+           let peerPreferredString = info?["preferredPeerCount"],
+           let peerPreferredCount = Int(peerPreferredString),
+           discoveryId != myDiscoveryInfo.discoveryId,
+           peerPreferredCount == self.maxPeerCount {
+            prettyPrint("Found Peer: [\(peerID)], with id: [\(discoveryId)], preferredPeerCount: [\(peerPreferredCount)]")
             
             peersLock.lock()
             foundPeers.insert(peerID)
@@ -294,6 +302,8 @@ extension P2PSession: MCNearbyServiceBrowserDelegate {
             if let peer = peer {
                 delegate?.p2pSession(self, didUpdate: peer)
             }
+        } else {
+            prettyPrint("Peer [\(peerID.displayName)] has mismatched preferred count.")
         }
     }
     
