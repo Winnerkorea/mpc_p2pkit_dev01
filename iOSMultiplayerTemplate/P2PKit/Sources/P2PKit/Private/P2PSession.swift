@@ -37,7 +37,7 @@ class P2PSession: NSObject {
     
     let myPeer: Peer
     private let myDiscoveryInfo: DiscoveryInfo
-    private let maxPeerCount: Int
+    private var maxPeerCount: Int
     
     private let session: MCSession
     private let advertiser: MCNearbyServiceAdvertiser

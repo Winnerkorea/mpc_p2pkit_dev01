@@ -38,8 +38,11 @@ public struct P2PNetwork {
         }
         return hostSelector
     }()
+    private static var currentMaxPeerCount: Int?
 
     // MARK: - Public P2PHostSelector
+
+    
     
     public static var host: Peer? {
         return hostSelector.host
@@ -72,11 +75,34 @@ public struct P2PNetwork {
                Peer(MCPeerID(displayName: "Player 2"), id: "Player 2")]
     }()
     
+    // When start, select maxPeerCount
+    public static func start(maxPeerCount: Int) {
+        if session.delegate == nil {
+            let myPeer = Peer.getMyPeer()
+            currentMaxPeerCount = maxPeerCount
+            session = P2PSession(myPeer: myPeer, maxPeerCount: maxPeerCount)
+            session.delegate = sessionListener
+            session.start()
+        }
+    }
+    
+    
     // MARK: - Public P2PSession Management
-
+//
+//    public static func start() {
+//        if session.delegate == nil {
+//            P2PNetwork.hostSelector
+//            session.delegate = sessionListener
+//            session.start()
+//        }
+//    }
+    
     public static func start() {
         if session.delegate == nil {
-            P2PNetwork.hostSelector
+            let myPeer = Peer.getMyPeer()
+            let defaultMaxCount = 4
+            currentMaxPeerCount = defaultMaxCount
+            session = P2PSession(myPeer: myPeer, maxPeerCount: defaultMaxCount)
             session.delegate = sessionListener
             session.start()
         }
@@ -93,7 +119,8 @@ public struct P2PNetwork {
         
         let newPeerId = MCPeerID(displayName: displayName ?? oldSession.myPeer.displayName)
         let myPeer = Peer.resetMyPeer(with: newPeerId)
-        session = P2PSession(myPeer: myPeer)
+        let maxCount = currentMaxPeerCount ?? 4
+        session = P2PSession(myPeer: myPeer, maxPeerCount: maxCount)
         session.delegate = sessionListener
         session.start()
     }
